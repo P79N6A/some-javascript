@@ -3,17 +3,25 @@
 // @namespace    http://tampermonkey.net/
 // @version      0.1
 // @description  batch monitor
-// @author       yusen
+// @author       1
 // @match        http://cron.orp.baidu.com/cron/tasks?productId=1276&platform=orp&uuid=&productName=wallet-monitor&reqflag=1&taskId=&appId=&status=1&name=&runScript=&opName=v_wangyusen_dxm
 // @match        http://cron.orp.baidu.com/cron/jobhistory
 // @grant        none
 // @require      https://cdn.bootcss.com/echarts/4.1.0.rc2/echarts.min.js
 // ==/UserScript==
 
+  Date.prototype.format = function() {
+        var s = '';
+        var mouth = (this.getMonth() + 1)>=10?(this.getMonth() + 1):('0'+(this.getMonth() + 1));
+        var day = this.getDate()>=10?this.getDate():('0'+this.getDate());
+        s += this.getFullYear() + '-'; // 获取年份。
+        s += mouth + "-"; // 获取月份。
+        s += day; // 获取日。
+        return (s); // 返回日期。
+    };
 (function() {
     'use strict';
 
-    // Your code here...
     var mainArr = [
         {'taskId':13108,'name':'【实时】新漏斗任务(2:10)', 'data':[]},
         {'taskId':13210,'name':'动态更新错误码(2:10)', 'data':[]},
@@ -30,22 +38,21 @@
 
     function return_date_list(){
         var date_obj = new Date();
+        date_obj.setDate(date_obj.getDate()+1);
         var re_arr = {};
         var date_item;
-        if(re_arr.length != 0){
-            return re_arr;
-        }
-        for(var i=0;i<33;i++){
-            date_obj.setDate(date_obj.setDate()-i);
-            date_item = (date_obj.getYear()+1900)+'-'+(date_obj.getMonth()+1)+'-'+date_obj.getDay();
-            re_arr[date_item] = 0;
+        for(var i=1;i<31;i++){
+            date_obj.setDate(date_obj.getDate()-1);
+            //date_item = (date_obj.getYear()+1900)+'-'+(date_obj.getMonth()+1)+'-'+date_obj.getDay();
+            re_arr[date_obj.format()] = NaN;
         }
         return re_arr;
     }
     function line_simple(data){
         var option = {
             title: {
-                text: data[0].name
+                text: data[0].name,
+                align:'center',
             },
             tooltip : {
                 trigger: 'axis',
@@ -78,11 +85,8 @@
                 name: '',
             };
             date_list = return_date_list();
-            //console.log(date_list);
-            for(var i=0,l=data[o]['data'].length; i < l; i++){
-                //option['xAxis']['data'][i] = data[o]['data'][i][1].substr(0,10);
-                //option['series'][o]['data'][i] = data[o]['data'][i][6];
 
+            for(var i=0,l=data[o]['data'].length; i < l; i++){
                 var date_orp = data[o]['data'][i][1].substr(0,10);
                 var date_orp2 = data[o]['data'][i][2].substr(0,10);
                 var num_orp = data[o]['data'][i][6];
@@ -90,11 +94,11 @@
                     if(date_orp2 == ''){
                         continue;
                     }else{
-                        date_list[date_orp2] = NaN;
+                        date_list[date_orp2] = 0;
                     }
                 }else{
                     if(date_orp2 == ''){
-                        date_list[date_orp] = NaN;
+                        date_list[date_orp] = 0;
                     }else{
                         date_list[date_orp2] = num_orp;
                     }
@@ -110,7 +114,7 @@
         option['xAxis']['data'].reverse();
         //console.log(option,date_list);
         return option;
-    };
+    }
 
     $('#taskSearForm').after('<div id="canvas_main" style="width:100%;height:auto;"></div>');
     var chart = [];
@@ -134,20 +138,11 @@
             if(key < 11){
                 chart_data = line_simple([mainArr[key]]);
                 chart[key].setOption(chart_data);
-                return false;
-            }
-            if(key == 5){
-                chart_data = line_simple([mainArr[4],mainArr[5]]);
-                chart[4].setOption(chart_data);
-            }
-            if(key == 10){
-                chart_data = line_simple(mainArr.slice(6));
-                chart[5].setOption(chart_data);
-                //console.log(mainArr);
+                return;
             }
         });
+        //return false;
 
     });
-
 })();
 
