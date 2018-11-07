@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      0.1
 // @description  batch monitor
-// @author       1
+// @author       yusen
 // @match        http://cron.orp.baidu.com/cron/tasks?productId=1276&platform=orp&uuid=&productName=wallet-monitor&reqflag=1&taskId=&appId=&status=1&name=&runScript=&opName=v_wangyusen_dxm
 // @match        http://cron.orp.baidu.com/cron/jobhistory
 // @grant        none
@@ -35,6 +35,13 @@
         {'taskId':13206,'name':'7天前cardbind埋点备份都palo(17:10)', 'data':[]},
         {'taskId':13207,'name':'7天前pay埋点备份到palo(18:10)', 'data':[]},
     ];
+    var dateToday;
+    dateToday = new Date().format();
+    console.log(dateToday);
+
+    var colorDone = '#33ff33';
+    var colorWait = '#003399';
+    var colorError = '#ccff00';
 
     function return_date_list(){
         var date_obj = new Date();
@@ -75,14 +82,17 @@
                     formatter: '{value} s'
                 }
             },
-            series: []
+            series: [],
+            //color:['#00f']
         };
         var date_list;
+        var last_item;
         for(var o=0;o<data.length;o++){
             option['series'][o] = {
                 data: [],
                 type: 'line',
                 name: '',
+                //lineStyle:{'color':'#060',}
             };
             date_list = return_date_list();
 
@@ -90,6 +100,9 @@
                 var date_orp = data[o]['data'][i][1].substr(0,10);
                 var date_orp2 = data[o]['data'][i][2].substr(0,10);
                 var num_orp = data[o]['data'][i][6];
+                if(data[o]['data'][i][3]=='失败'){
+                    num_orp = 0;
+                }
                 if(date_orp == ''){
                     if(date_orp2 == ''){
                         continue;
@@ -112,6 +125,18 @@
             option['series'][o]['data'].reverse();
         }
         option['xAxis']['data'].reverse();
+
+        //完成颜色
+        option['color']=[colorDone];
+        //console.log(date_list,dateToday);
+        if(date_list[dateToday] == 0){
+            //失败颜色
+            option['color']=[colorError];
+        }
+        if(isNaN(date_list[dateToday])){
+            //等待颜色
+            option['color']=[colorWait];
+        }
         //console.log(option,date_list);
         return option;
     }
